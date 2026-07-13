@@ -9,10 +9,11 @@ start_time = time.perf_counter()
 tracemalloc.start()
 
 with open(file_path, 'r') as f:
-    reader = csv.DictReader(f)
-    total_sum = 0
+    reader = list(csv.DictReader(f))
+    # total_sum = 0
     for row in reader:
-        total_sum += float(row['total_amount'])
+        total_sum = sum(float(row['total_amount']))
+        
         
     print(f'Total sum is: {total_sum:.2f}')
 peak = tracemalloc.get_traced_memory()
