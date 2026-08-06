@@ -16,11 +16,12 @@ import structlog
 import uuid
 from structlog.contextvars import bind_contextvars, clear_contextvars
 from tenacity import retry, wait_random_exponential, retry_if_exception_type, stop_after_attempt
+import tempfile
 
 
 DB = psycopg2.connect("dbname=taxi user=postgres password=postgres host=localhost")
 
-
+log_file = open("etl.log", "a", encoding='utf-8') 
 structlog.configure(
     processors=[
         structlog.contextvars.merge_contextvars,
@@ -30,7 +31,7 @@ structlog.configure(
         
 
     ],
-   
+   logger_factory=structlog.WriteLoggerFactory(file=log_file)
 )
 logger = structlog.get_logger()
 
@@ -50,7 +51,7 @@ def load(path, target_month):
     logger.info("load_started", path=path)
     error_count = 0
     total_rows = 0
-    def generator(rows):
+    def rows_parsing(rows):
         nonlocal total_rows
         for r in rows:
             
@@ -73,11 +74,11 @@ def load(path, target_month):
                 yield("bad", {'raw-data' : r, 'reason' : str(e)})
 
 
-   
-    with open(path, 'r') as f, open("dead-letter.ndjson", 'a', encoding='utf-8') as fn, open("temp_csv", "w", newline='',  encoding='utf8') as good_f:
-        rows = csv.DictReader(f)
-        stream = generator(rows)
-        writer = csv.writer(good_f)
+    
+    with open(path, 'r') as raw_f, open("dead-letter.ndjson", 'a', encoding='utf-8') as dead_letter, tempfile.TemporaryFile("w+", newline='',  encoding='utf8') as temp_csv:
+        rows = csv.DictReader(raw_f)
+        stream = rows_parsing(rows)
+        writer = csv.writer(temp_csv)
         for status, item in stream:
             if status == "good":
                  writer.writerow([
@@ -91,10 +92,10 @@ def load(path, target_month):
             elif status == "bad":
                 error_count += 1
                 
-                json.dump(item, fn, ensure_ascii=False)
-                fn.write("\n")
-    if total_rows > 0:
-        with open("temp_csv", 'r') as ff:
+                json.dump(item, dead_letter, ensure_ascii=False)
+                dead_letter .write("\n")
+        if total_rows > 0:
+            temp_csv.seek(0)
 
             with DB.cursor() as cursor:
 
@@ -108,7 +109,7 @@ def load(path, target_month):
                     """
                         COPY temp_trips (vendor, pickup, dist, total)
                         FROM STDIN WITH (FORMAT csv); 
-                        """, ff) 
+                        """, temp_csv) 
                 
                 cursor.execute(
                 """ INSERT INTO trips(vendor, pickup, dist, total)
@@ -124,8 +125,6 @@ def load(path, target_month):
 
 
 
-    if os.path.exists('temp_csv'):
-        os.remove('temp_csv')
     
     if total_rows ==0:
         return 0
@@ -155,18 +154,18 @@ def run():
         if data.month:
 
             path = download(data.month)
-            n = load(path, data.month)
-            logger.info("Pipeline_works", final_rows=n)
+            loaded_rows_count = load(path, data.month)
+            logger.info("Pipeline_completed_successfully", final_rows=loaded_rows_count)
         elif data.backfill:
-            start_month, end_month = data.backfill.split(":")
+            start_month, end_month = data.backfill.split(":") #2024-01:202412
             year = start_month.split("-")[0]
             start_mnth = int(start_month.split("-")[1])
             end_mnth = int(end_month.split("-")[1])
             for m in range (start_mnth, end_mnth+1):
                 current_month = f"{year}-{m:02d}"
                 path = download(current_month)
-                n = load(path, data.month)
-                logger.info("Pipeline_works", final_rows=n)
+                loaded_rows_count = load(path, current_month)
+                logger.info("Pipeline_completed_successfully", final_rows=loaded_rows_count)
             
         else:
             logger.error("No --month or --backfill detected")

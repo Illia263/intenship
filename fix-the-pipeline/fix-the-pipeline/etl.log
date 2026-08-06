@@ -1,0 +1,7 @@
+{"target_month": "2024-01", "event": "pipeline_started", "run_id": "cccfd9f8-30c5-4403-a585-c24ed2b1a7d4", "level": "info", "timestamp": "2026-08-05T11:05:15.297325Z"}
+{"month": "2024-01", "destination": "/tmp/data", "event": "download_started", "run_id": "cccfd9f8-30c5-4403-a585-c24ed2b1a7d4", "level": "info", "timestamp": "2026-08-05T11:05:15.297462Z"}
+{"path": "/tmp/data/2024-01.csv", "event": "load_started", "run_id": "cccfd9f8-30c5-4403-a585-c24ed2b1a7d4", "level": "info", "timestamp": "2026-08-05T11:05:15.439363Z"}
+{"target_month": "2024-01", "event": "pipeline_started", "run_id": "867cef8c-0c4b-4e04-871d-c0d458e94d39", "level": "info", "timestamp": "2026-08-05T11:07:40.718530Z"}
+{"month": "2024-01", "destination": "/tmp/data", "event": "download_started", "run_id": "867cef8c-0c4b-4e04-871d-c0d458e94d39", "level": "info", "timestamp": "2026-08-05T11:07:40.718668Z"}
+{"path": "/tmp/data/2024-01.csv", "event": "load_started", "run_id": "867cef8c-0c4b-4e04-871d-c0d458e94d39", "level": "info", "timestamp": "2026-08-05T11:07:40.837291Z"}
+{"final_rows": 499987, "event": "Pipeline_works", "run_id": "867cef8c-0c4b-4e04-871d-c0d458e94d39", "level": "info", "timestamp": "2026-08-05T11:07:52.977708Z"}
