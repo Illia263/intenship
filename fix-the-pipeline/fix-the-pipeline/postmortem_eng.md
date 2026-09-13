@@ -1,4 +1,4 @@
-| # | What I found | How it would manifest in prod | Why it happened so | Fix | Regress test |
+| # | What I found | How it would manifest in prod | Why it happened | Fix | Regress test |
 | --- | --- | --- | --- | --- | --- |
 |  |  |  |  |  |  |
 | 1 | The reason of discrepancy in money | The revenue would stably diverge by n amount, because of this the company's accountants could have problems because of not correct reports | Due to the fact that the intern used Double Precision and float for money, they write the number into binary code with a minimal error, because of this on a distance there will be a small discrepancy in revenue | In the file schema.sql replaced the type of column total to Numeric, in the file etl.py replaced the type of column total from float()  to decimal() | Conducted test through tests/inc3.py, also checked through make check-money |
